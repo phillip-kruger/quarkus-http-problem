@@ -12,6 +12,11 @@
     <name>Quarkus - HTTP-Problem - Integration Tests</name>
     <packaging>pom</packaging>
 
+    <!-- core is always in the reactor so it is published for Quarkus Platform compatibility tests -->
+    <modules>
+        <module>core</module>
+    </modules>
+
     <dependencies>
         <dependency>
             <groupId>io.quarkiverse.httpproblem</groupId>
@@ -89,7 +94,6 @@
         <profile>
             <id>it</id>
             <modules>
-                <module>core</module>
                 <module>openapi</module>
                 <module>zalando</module>
                 <module>rest-client</module>
