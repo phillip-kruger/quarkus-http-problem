@@ -93,6 +93,7 @@
                 <module>openapi</module>
                 <module>zalando</module>
                 <module>rest-client</module>
+                <module>tck</module>
             </modules>
         </profile>
         <profile>
