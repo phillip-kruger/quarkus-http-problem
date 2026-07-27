@@ -9,7 +9,7 @@ import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-class ZalandoProblemMapperIT {
+class ZalandoProblemMapperTest {
 
     static final String SAMPLE_TITLE = "I'm a teapot";
     static final String SAMPLE_DETAIL = "A small one";

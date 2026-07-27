@@ -12,8 +12,8 @@ import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(DisabledMapperIT.WebApplicationExceptionMapperDisabled.class)
-class DisabledMapperIT {
+@TestProfile(DisabledMapperTest.WebApplicationExceptionMapperDisabled.class)
+class DisabledMapperTest {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
