@@ -12,9 +12,18 @@
     <name>Quarkus - HTTP-Problem - Integration Tests</name>
     <packaging>pom</packaging>
 
-    <!-- core is always in the reactor so it is published for Quarkus Platform compatibility tests -->
+    <properties>
+        <!-- we only run the tests when the it profile is enabled -->
+        <skipSurefireTests>true</skipSurefireTests>
+    </properties>
+
+    <!-- we always publish the modules for consumption by the Quarkus Platform -->
     <modules>
         <module>core</module>
+        <module>openapi</module>
+        <module>rest-client</module>
+        <module>zalando</module>
+        <module>tck</module>
     </modules>
 
     <dependencies>
@@ -57,20 +66,10 @@
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-failsafe-plugin</artifactId>
+                <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <excludes>
-                        <exclude>**/*NativeIT.java</exclude>
-                    </excludes>
+                    <skip>${skipSurefireTests}</skip>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>net.revelc.code.formatter</groupId>
@@ -79,7 +78,6 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>net.revelc.code</groupId>
                 <artifactId>impsort-maven-plugin</artifactId>
@@ -93,12 +91,10 @@
     <profiles>
         <profile>
             <id>it</id>
-            <modules>
-                <module>openapi</module>
-                <module>zalando</module>
-                <module>rest-client</module>
-                <module>tck</module>
-            </modules>
+            <properties>
+                <!-- we only run the tests when the it profile is enabled -->
+                <skipSurefireTests>false</skipSurefireTests>
+            </properties>
         </profile>
         <profile>
             <id>jackson</id>
@@ -144,6 +140,7 @@
             <id>native</id>
             <properties>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
+                <skipSurefireTests>true</skipSurefireTests>
             </properties>
 
             <build>

@@ -26,12 +26,12 @@ import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 
 @QuarkusTest
-@TestProfile(UnsanitizedJsonMappersIT.SanitizationDisabled.class)
-class UnsanitizedJsonMappersIT {
+@TestProfile(UnsanitizedJsonMappersTest.SanitizationDisabled.class)
+class UnsanitizedJsonMappersTest {
 
     static final String SANITIZED_DETAIL = "Malformed request body";
 
-    private static final Logger logger = LoggerFactory.getLogger(UnsanitizedJsonMappersIT.class);
+    private static final Logger logger = LoggerFactory.getLogger(UnsanitizedJsonMappersTest.class);
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
