@@ -55,6 +55,7 @@ import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
+import io.quarkiverse.httpproblem.postprocessing.ProblemLoggingConfig;
 
 class ConstraintViolationExceptionMapperTest {
 
@@ -64,7 +65,7 @@ class ConstraintViolationExceptionMapperTest {
     final String TOO_SHORT_COMPANY_NAME = "CO";
 
     final PostProcessorsRegistry registry = new PostProcessorsRegistry(
-            List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
+            List.of(new ProblemLogger(ProblemLoggingConfig.defaults()), new ProblemDefaultsProvider()));
     final ProblemRuntimeFixedConfig runtimeConfig = constraintViolationConfig(400, "Bad Request");
     final ConstraintViolationExceptionMapper mapper = new ConstraintViolationExceptionMapper(registry, runtimeConfig);
     final StubResourceInfo resourceInfo = StubResourceInfo.withDefaultValidator();
