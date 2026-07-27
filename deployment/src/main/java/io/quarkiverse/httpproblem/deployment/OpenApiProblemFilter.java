@@ -11,6 +11,7 @@ import org.eclipse.microprofile.openapi.models.media.Schema;
 import org.eclipse.microprofile.openapi.models.responses.APIResponse;
 
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 
 /**
  * OpenAPI build-time filter that automatically augments various OpenApi model parts:
@@ -19,12 +20,12 @@ import io.quarkiverse.httpproblem.HttpProblem;
  */
 public class OpenApiProblemFilter implements OASFilter {
 
-    private final ProblemBuildConfig config;
+    private final ProblemRuntimeFixedConfig runtimeConfig;
     private final Content problemContent;
     private final Content validationProblemContent;
 
-    public OpenApiProblemFilter(ProblemBuildConfig config) {
-        this.config = config;
+    public OpenApiProblemFilter(ProblemBuildConfig config, ProblemRuntimeFixedConfig runtimeConfig) {
+        this.runtimeConfig = runtimeConfig;
         this.problemContent = createContent(config.openapi().defaultSchema());
         this.validationProblemContent = createContent(config.openapi().validationProblemSchema());
     }
@@ -40,10 +41,10 @@ public class OpenApiProblemFilter implements OASFilter {
     public Operation filterOperation(Operation operation) {
         if (operation.getResponses().hasAPIResponse(HTTP_VALIDATION_PROBLEM_STATUS_CODE)) {
             APIResponse response = operation.getResponses().getAPIResponse(HTTP_VALIDATION_PROBLEM_STATUS_CODE)
-                    .description(config.constraintViolation().description())
+                    .description(runtimeConfig.constraintViolation().description())
                     .content(validationProblemContent);
 
-            operation.getResponses().addAPIResponse(String.valueOf(config.constraintViolation().status()), response);
+            operation.getResponses().addAPIResponse(String.valueOf(runtimeConfig.constraintViolation().status()), response);
             operation.getResponses().removeAPIResponse(HTTP_VALIDATION_PROBLEM_STATUS_CODE);
         }
         return operation;

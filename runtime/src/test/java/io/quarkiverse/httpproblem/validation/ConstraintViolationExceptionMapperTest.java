@@ -1,6 +1,8 @@
 package io.quarkiverse.httpproblem.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -49,6 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
@@ -62,9 +65,8 @@ class ConstraintViolationExceptionMapperTest {
 
     final PostProcessorsRegistry registry = new PostProcessorsRegistry(
             List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
-    final ConstraintViolationConfig constraintViolationConfig = new ConstraintViolationConfig(400, "Bad Request");
-    final ConstraintViolationExceptionMapper mapper = new ConstraintViolationExceptionMapper(registry,
-            constraintViolationConfig);
+    final ProblemRuntimeFixedConfig runtimeConfig = constraintViolationConfig(400, "Bad Request");
+    final ConstraintViolationExceptionMapper mapper = new ConstraintViolationExceptionMapper(registry, runtimeConfig);
     final StubResourceInfo resourceInfo = StubResourceInfo.withDefaultValidator();
 
     @BeforeEach
@@ -213,7 +215,7 @@ class ConstraintViolationExceptionMapperTest {
         ConstraintViolationException exception = new ConstraintViolationException(violations);
 
         ConstraintViolationExceptionMapper resourceInfoLessMapper = new ConstraintViolationExceptionMapper(registry,
-                constraintViolationConfig);
+                runtimeConfig);
         resourceInfoLessMapper.resourceInfo = null;
 
         List<Violation> mappedViolations = mapAndExtractViolations(exception, resourceInfoLessMapper);
@@ -238,7 +240,7 @@ class ConstraintViolationExceptionMapperTest {
         ConstraintViolationException exception = new ConstraintViolationException(violations);
 
         ConstraintViolationExceptionMapper resourceInfoLessMapper = new ConstraintViolationExceptionMapper(registry,
-                constraintViolationConfig);
+                runtimeConfig);
         resourceInfoLessMapper.resourceInfo = null;
 
         List<Violation> mappedViolations = mapAndExtractViolations(exception, resourceInfoLessMapper);
@@ -289,8 +291,7 @@ class ConstraintViolationExceptionMapperTest {
                 .validateParameters(impl, implMethod, new Object[] { "short" });
         ConstraintViolationException exception = new ConstraintViolationException(constraintViolations);
 
-        ConstraintViolationExceptionMapper testMapper = new ConstraintViolationExceptionMapper(registry,
-                constraintViolationConfig);
+        ConstraintViolationExceptionMapper testMapper = new ConstraintViolationExceptionMapper(registry, runtimeConfig);
         testMapper.resourceInfo = new ResourceInfo() {
             @Override
             public Method getResourceMethod() {
@@ -536,8 +537,7 @@ class ConstraintViolationExceptionMapperTest {
                 .validateParameters(resource, method, args);
         ConstraintViolationException exception = new ConstraintViolationException(violations);
 
-        ConstraintViolationExceptionMapper testMapper = new ConstraintViolationExceptionMapper(registry,
-                constraintViolationConfig);
+        ConstraintViolationExceptionMapper testMapper = new ConstraintViolationExceptionMapper(registry, runtimeConfig);
         testMapper.resourceInfo = new ResourceInfo() {
             @Override
             public Method getResourceMethod() {
@@ -586,8 +586,7 @@ class ConstraintViolationExceptionMapperTest {
                 .validateParameters(resource, method, new Object[] { beanParam });
         ConstraintViolationException exception = new ConstraintViolationException(violations);
 
-        ConstraintViolationExceptionMapper testMapper = new ConstraintViolationExceptionMapper(registry,
-                constraintViolationConfig);
+        ConstraintViolationExceptionMapper testMapper = new ConstraintViolationExceptionMapper(registry, runtimeConfig);
         testMapper.resourceInfo = new ResourceInfo() {
             @Override
             public Method getResourceMethod() {
@@ -635,6 +634,16 @@ class ConstraintViolationExceptionMapperTest {
             this.token = token;
             this.data = data;
         }
+    }
+
+    private static ProblemRuntimeFixedConfig constraintViolationConfig(int status, String title) {
+        ProblemRuntimeFixedConfig config = mock(ProblemRuntimeFixedConfig.class);
+        ProblemRuntimeFixedConfig.ConstraintViolationConfig cvConfig = mock(
+                ProblemRuntimeFixedConfig.ConstraintViolationConfig.class);
+        when(config.constraintViolation()).thenReturn(cvConfig);
+        when(cvConfig.status()).thenReturn(status);
+        when(cvConfig.title()).thenReturn(title);
+        return config;
     }
 
 }

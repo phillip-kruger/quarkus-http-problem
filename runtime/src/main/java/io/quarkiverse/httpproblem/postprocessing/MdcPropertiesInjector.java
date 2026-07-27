@@ -3,9 +3,12 @@ package io.quarkiverse.httpproblem.postprocessing;
 import java.util.Collections;
 import java.util.Set;
 
+import jakarta.inject.Inject;
+
 import org.slf4j.MDC;
 
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 
 /**
  * Injects existing MDC properties listed in the configuration into final response. Missing MDC values and properties already
@@ -14,6 +17,11 @@ import io.quarkiverse.httpproblem.HttpProblem;
 public class MdcPropertiesInjector implements ProblemPostProcessor {
 
     private final Set<String> properties;
+
+    @Inject
+    public MdcPropertiesInjector(ProblemRuntimeFixedConfig config) {
+        this.properties = config.includeMdcProperties();
+    }
 
     public MdcPropertiesInjector(Set<String> properties) {
         this.properties = Collections.unmodifiableSet(properties);

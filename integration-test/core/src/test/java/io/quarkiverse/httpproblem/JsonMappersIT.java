@@ -8,18 +8,18 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
+import java.io.IOException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.RestAssured;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 
 @QuarkusTest
 class JsonMappersIT {
@@ -120,7 +120,6 @@ class JsonMappersIT {
     private static void assertDetailDoesNotLeakInternals(ExtractableResponse<Response> response) {
         String contentType = response.contentType();
         if (contentType == null || !contentType.contains("json")) {
-            // RESTEasy Reactive returned plain text — no JSON to check
             return;
         }
         String detail = response.body().jsonPath().getString("detail");

@@ -1,7 +1,6 @@
 package io.quarkiverse.httpproblem.deployment;
 
 import static io.quarkiverse.httpproblem.deployment.ExceptionMapperDefinition.mapper;
-import static io.quarkus.deployment.annotations.ExecutionTime.STATIC_INIT;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,27 +8,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.inject.Singleton;
 import jakarta.ws.rs.Priorities;
 
 import org.eclipse.microprofile.openapi.OASFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.MdcPropertiesInjector;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
 import io.quarkiverse.httpproblem.postprocessing.ProblemPostProcessor;
-import io.quarkiverse.httpproblem.postprocessing.ProblemRecorder;
-import io.quarkiverse.httpproblem.validation.ConstraintViolationConfig;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
-import io.quarkus.arc.deployment.SyntheticBeanBuildItem;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
@@ -38,7 +33,6 @@ import io.quarkus.jsonb.spi.JsonbSerializerBuildItem;
 import io.quarkus.resteasy.common.spi.ResteasyJaxrsProviderBuildItem;
 import io.quarkus.resteasy.reactive.spi.CustomExceptionMapperBuildItem;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
-import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.smallrye.openapi.deployment.spi.AddToOpenAPIDefinitionBuildItem;
 
 public class ProblemProcessor {
@@ -208,8 +202,9 @@ public class ProblemProcessor {
     }
 
     @BuildStep(onlyIf = OpenApiDetector.class)
-    void registerOpenApiFilter(BuildProducer<AddToOpenAPIDefinitionBuildItem> openAPIProducer, ProblemBuildConfig config) {
-        OASFilter filter = new OpenApiProblemFilter(config);
+    void registerOpenApiFilter(BuildProducer<AddToOpenAPIDefinitionBuildItem> openAPIProducer,
+            ProblemBuildConfig config, ProblemRuntimeFixedConfig runtimeConfig) {
+        OASFilter filter = new OpenApiProblemFilter(config, runtimeConfig);
         openAPIProducer.produce(new AddToOpenAPIDefinitionBuildItem(filter));
     }
 
@@ -227,34 +222,7 @@ public class ProblemProcessor {
         additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(PostProcessorsRegistry.class));
         additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(ProblemLogger.class));
         additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(ProblemDefaultsProvider.class));
-    }
-
-    @Record(STATIC_INIT)
-    @BuildStep
-    SyntheticBeanBuildItem setupMdc(ProblemRecorder recorder, ProblemBuildConfig config) {
-        if (config.includeMdcProperties().isEmpty()) {
-            return null;
-        }
-        RuntimeValue<MdcPropertiesInjector> runtimeValue = recorder.createMdcInjector(config.includeMdcProperties());
-        return SyntheticBeanBuildItem.configure(MdcPropertiesInjector.class)
-                .scope(Singleton.class)
-                .addType(ProblemPostProcessor.class)
-                .runtimeValue(runtimeValue)
-                .unremovable()
-                .done();
-    }
-
-    @Record(STATIC_INIT)
-    @BuildStep
-    SyntheticBeanBuildItem configureConstraintViolation(ProblemRecorder recorder, ProblemBuildConfig config) {
-        int status = config.constraintViolation() != null ? config.constraintViolation().status() : 400;
-        String title = config.constraintViolation() != null ? config.constraintViolation().title() : "Bad Request";
-        RuntimeValue<ConstraintViolationConfig> runtimeValue = recorder.createConstraintViolationConfig(status, title);
-        return SyntheticBeanBuildItem.configure(ConstraintViolationConfig.class)
-                .scope(Singleton.class)
-                .runtimeValue(runtimeValue)
-                .unremovable()
-                .done();
+        additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(MdcPropertiesInjector.class));
     }
 
     @BuildStep

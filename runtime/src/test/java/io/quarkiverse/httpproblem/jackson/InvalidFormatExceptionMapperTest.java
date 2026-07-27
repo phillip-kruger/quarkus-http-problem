@@ -2,6 +2,7 @@ package io.quarkiverse.httpproblem.jackson;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
@@ -22,7 +24,7 @@ class InvalidFormatExceptionMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
             List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
-    InvalidFormatExceptionMapper mapper = new InvalidFormatExceptionMapper(registry, true);
+    InvalidFormatExceptionMapper mapper = new InvalidFormatExceptionMapper(registry, configWith(true));
 
     @Test
     void shouldProduceHttp400WithFieldInfo() {
@@ -66,7 +68,7 @@ class InvalidFormatExceptionMapperTest {
 
     @Test
     void shouldSanitizeDetailByDefault() {
-        InvalidFormatExceptionMapper sanitizedMapper = new InvalidFormatExceptionMapper(registry, false);
+        InvalidFormatExceptionMapper sanitizedMapper = new InvalidFormatExceptionMapper(registry, configWith(false));
         InvalidFormatException exception = buildExceptionWithPath(
                 new JsonMappingException.Reference(this, "customFieldName"));
 
@@ -99,6 +101,12 @@ class InvalidFormatExceptionMapperTest {
             exception.prependPath(pathSegments[i]);
         }
         return exception;
+    }
+
+    private static ProblemRuntimeFixedConfig configWith(boolean includeDetails) {
+        ProblemRuntimeFixedConfig config = mock(ProblemRuntimeFixedConfig.class);
+        when(config.includeDetails()).thenReturn(includeDetails);
+        return config;
     }
 
 }

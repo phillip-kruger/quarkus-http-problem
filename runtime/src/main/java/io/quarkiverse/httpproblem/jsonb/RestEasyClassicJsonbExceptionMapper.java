@@ -8,10 +8,9 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.ProcessingException;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import io.quarkiverse.httpproblem.ExceptionMapperBase;
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 
 @Priority(Priorities.USER)
@@ -19,7 +18,7 @@ public final class RestEasyClassicJsonbExceptionMapper extends ExceptionMapperBa
 
     static final String SANITIZED_DETAIL = "Malformed request body";
 
-    private final boolean includeDetails;
+    private boolean includeDetails;
 
     public RestEasyClassicJsonbExceptionMapper() {
         this.includeDetails = false;
@@ -27,9 +26,9 @@ public final class RestEasyClassicJsonbExceptionMapper extends ExceptionMapperBa
 
     @Inject
     public RestEasyClassicJsonbExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
-            @ConfigProperty(name = "quarkus.http-problem.include-details", defaultValue = "false") boolean includeDetails) {
+            ProblemRuntimeFixedConfig config) {
         super(postProcessorsRegistry);
-        this.includeDetails = includeDetails;
+        this.includeDetails = config.includeDetails();
     }
 
     /**

@@ -6,12 +6,11 @@ import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.quarkiverse.httpproblem.ExceptionMapperBase;
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 
 /**
@@ -22,17 +21,16 @@ public final class JsonProcessingExceptionMapper extends ExceptionMapperBase<Jso
 
     static final String SANITIZED_DETAIL = "Malformed request body";
 
-    private final boolean includeDetails;
+    private boolean includeDetails;
 
     public JsonProcessingExceptionMapper() {
         this.includeDetails = false;
     }
 
     @Inject
-    public JsonProcessingExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
-            @ConfigProperty(name = "quarkus.http-problem.include-details", defaultValue = "false") boolean includeDetails) {
+    public JsonProcessingExceptionMapper(PostProcessorsRegistry postProcessorsRegistry, ProblemRuntimeFixedConfig config) {
         super(postProcessorsRegistry);
-        this.includeDetails = includeDetails;
+        this.includeDetails = config.includeDetails();
     }
 
     @Override

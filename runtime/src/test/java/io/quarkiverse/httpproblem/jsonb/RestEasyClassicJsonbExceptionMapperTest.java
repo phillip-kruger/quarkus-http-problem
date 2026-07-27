@@ -1,6 +1,8 @@
 package io.quarkiverse.httpproblem.jsonb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -11,6 +13,7 @@ import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
@@ -19,7 +22,7 @@ class RestEasyClassicJsonbExceptionMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
             List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
-    RestEasyClassicJsonbExceptionMapper mapper = new RestEasyClassicJsonbExceptionMapper(registry, true);
+    RestEasyClassicJsonbExceptionMapper mapper = new RestEasyClassicJsonbExceptionMapper(registry, configWith(true));
 
     @Test
     void processingExceptionShouldProduceHttp500() {
@@ -41,7 +44,8 @@ class RestEasyClassicJsonbExceptionMapperTest {
 
     @Test
     void shouldSanitizeDetailByDefault() {
-        RestEasyClassicJsonbExceptionMapper sanitizedMapper = new RestEasyClassicJsonbExceptionMapper(registry, false);
+        RestEasyClassicJsonbExceptionMapper sanitizedMapper = new RestEasyClassicJsonbExceptionMapper(registry,
+                configWith(false));
         ProcessingException exception = new ProcessingException(new JsonbException("Internal class details leaked"));
 
         Response response = sanitizedMapper.toResponse(exception);
@@ -61,5 +65,11 @@ class RestEasyClassicJsonbExceptionMapperTest {
         assertThat(response.getEntity())
                 .isInstanceOf(HttpProblem.class)
                 .hasFieldOrPropertyWithValue("detail", "Something is wrong");
+    }
+
+    private static ProblemRuntimeFixedConfig configWith(boolean includeDetails) {
+        ProblemRuntimeFixedConfig config = mock(ProblemRuntimeFixedConfig.class);
+        when(config.includeDetails()).thenReturn(includeDetails);
+        return config;
     }
 }

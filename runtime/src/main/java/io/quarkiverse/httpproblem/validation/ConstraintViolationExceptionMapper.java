@@ -27,6 +27,7 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import io.quarkiverse.httpproblem.ExceptionMapperBase;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 
 /**
@@ -56,16 +57,18 @@ public final class ConstraintViolationExceptionMapper extends ExceptionMapperBas
             .flatMap(Optional::stream)
             .toList();
 
-    private ConstraintViolationConfig constraintViolationConfig;
+    private int constraintViolationStatus = 400;
+    private String constraintViolationTitle = "Bad Request";
 
     public ConstraintViolationExceptionMapper() {
     }
 
     @Inject
     public ConstraintViolationExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
-            ConstraintViolationConfig constraintViolationConfig) {
+            ProblemRuntimeFixedConfig config) {
         super(postProcessorsRegistry);
-        this.constraintViolationConfig = constraintViolationConfig;
+        this.constraintViolationStatus = config.constraintViolation().status();
+        this.constraintViolationTitle = config.constraintViolation().title();
     }
 
     @Context
@@ -73,7 +76,7 @@ public final class ConstraintViolationExceptionMapper extends ExceptionMapperBas
 
     @Override
     protected HttpValidationProblem toProblem(ConstraintViolationException exception) {
-        return new HttpValidationProblem(constraintViolationConfig.status(), constraintViolationConfig.title(),
+        return new HttpValidationProblem(constraintViolationStatus, constraintViolationTitle,
                 toViolations(exception.getConstraintViolations()));
     }
 

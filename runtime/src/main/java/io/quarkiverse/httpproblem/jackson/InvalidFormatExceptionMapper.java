@@ -8,13 +8,12 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import io.quarkiverse.httpproblem.ExceptionMapperBase;
 import io.quarkiverse.httpproblem.HttpProblem;
+import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 
 /**
@@ -25,17 +24,16 @@ public final class InvalidFormatExceptionMapper extends ExceptionMapperBase<Inva
 
     static final String SANITIZED_DETAIL = "Malformed request body";
 
-    private final boolean includeDetails;
+    private boolean includeDetails;
 
     public InvalidFormatExceptionMapper() {
         this.includeDetails = false;
     }
 
     @Inject
-    public InvalidFormatExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
-            @ConfigProperty(name = "quarkus.http-problem.include-details", defaultValue = "false") boolean includeDetails) {
+    public InvalidFormatExceptionMapper(PostProcessorsRegistry postProcessorsRegistry, ProblemRuntimeFixedConfig config) {
         super(postProcessorsRegistry);
-        this.includeDetails = includeDetails;
+        this.includeDetails = config.includeDetails();
     }
 
     @Override
