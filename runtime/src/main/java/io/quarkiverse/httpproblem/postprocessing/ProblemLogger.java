@@ -71,6 +71,6 @@ public class ProblemLogger implements ProblemPostProcessor {
 
     @Override
     public int priority() {
-        return 101;
+        return LOG_PRIORITY;
     }
 }

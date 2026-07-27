@@ -10,6 +10,8 @@ import io.quarkiverse.httpproblem.HttpProblem;
  */
 public interface ProblemPostProcessor {
 
+    int LOG_PRIORITY = 0;
+
     Comparator<ProblemPostProcessor> DEFAULT_ORDERING = Comparator.comparingInt(ProblemPostProcessor::priority).reversed();
 
     /**
