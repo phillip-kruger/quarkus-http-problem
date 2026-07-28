@@ -9,10 +9,10 @@ import static org.mockito.Mockito.verify;
 import java.util.Collections;
 import java.util.Map;
 
+import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.slf4j.Logger;
 
 import io.quarkus.deployment.Capabilities;
 

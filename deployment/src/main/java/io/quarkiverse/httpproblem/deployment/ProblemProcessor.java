@@ -11,8 +11,7 @@ import java.util.stream.Stream;
 import jakarta.ws.rs.Priorities;
 
 import org.eclipse.microprofile.openapi.OASFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.MdcPropertiesInjector;
@@ -231,6 +230,6 @@ public class ProblemProcessor {
     }
 
     protected Logger logger() {
-        return LoggerFactory.getLogger(FEATURE_NAME);
+        return Logger.getLogger(FEATURE_NAME);
     }
 }
