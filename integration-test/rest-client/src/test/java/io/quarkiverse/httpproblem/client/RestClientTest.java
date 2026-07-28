@@ -10,7 +10,7 @@ import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 @QuarkusTest
-class RestClientIT {
+class RestClientTest {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();

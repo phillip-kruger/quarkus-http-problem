@@ -14,7 +14,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
  * but brackets work fine
  */
 @QuarkusTest
-class OpenApiIT {
+class OpenApiTest {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();

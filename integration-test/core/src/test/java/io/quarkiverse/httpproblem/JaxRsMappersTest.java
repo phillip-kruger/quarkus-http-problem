@@ -18,7 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
-class JaxRsMappersIT {
+class JaxRsMappersTest {
 
     static final String SAMPLE_DETAIL = "A small one";
 
