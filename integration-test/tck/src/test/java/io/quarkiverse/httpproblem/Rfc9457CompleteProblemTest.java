@@ -16,7 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-class Rfc9457CompleteProblemIT {
+class Rfc9457CompleteProblemTest {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
