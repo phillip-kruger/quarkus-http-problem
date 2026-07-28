@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import jakarta.ws.rs.core.HttpHeaders;
 
 @QuarkusTest
-class SecurityMappersTest {
+class SecurityMappersIT {
 
     static final String SAMPLE_DETAIL = "A small one";
 

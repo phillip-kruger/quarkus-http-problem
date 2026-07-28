@@ -7,33 +7,30 @@ import jakarta.inject.Inject;
 import jakarta.json.bind.JsonbException;
 import jakarta.ws.rs.Priorities;
 
+import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.ExceptionMapperBase;
 import io.quarkiverse.httpproblem.HttpProblem;
-import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 
 @Priority(Priorities.USER)
 public final class JsonbExceptionMapper extends ExceptionMapperBase<JsonbException> {
 
-    static final String SANITIZED_DETAIL = "Malformed request body";
-
-    private boolean includeDetails;
+    private final DetailSanitizer detailSanitizer;
 
     public JsonbExceptionMapper() {
-        this.includeDetails = false;
+        this.detailSanitizer = new DetailSanitizer();
     }
 
     @Inject
-    public JsonbExceptionMapper(PostProcessorsRegistry postProcessorsRegistry, ProblemRuntimeFixedConfig config) {
+    public JsonbExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
+            DetailSanitizer detailSanitizer) {
         super(postProcessorsRegistry);
-        this.includeDetails = config.includeDetails();
+        this.detailSanitizer = detailSanitizer;
     }
 
     @Override
     protected HttpProblem toProblem(JsonbException exception) {
-        if (!includeDetails) {
-            return HttpProblem.valueOf(BAD_REQUEST, SANITIZED_DETAIL);
-        }
-        return HttpProblem.valueOf(BAD_REQUEST, exception.getCause() == null ? null : exception.getCause().getMessage());
+        String rawDetail = exception.getCause() == null ? null : exception.getCause().getMessage();
+        return HttpProblem.valueOf(BAD_REQUEST, detailSanitizer.sanitize(rawDetail));
     }
 }

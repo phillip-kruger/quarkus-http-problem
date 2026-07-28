@@ -8,9 +8,9 @@ import jakarta.ws.rs.Priorities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.ExceptionMapperBase;
 import io.quarkiverse.httpproblem.HttpProblem;
-import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 
 /**
@@ -19,25 +19,21 @@ import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 @Priority(Priorities.USER)
 public final class JsonProcessingExceptionMapper extends ExceptionMapperBase<JsonProcessingException> {
 
-    static final String SANITIZED_DETAIL = "Malformed request body";
-
-    private boolean includeDetails;
+    private final DetailSanitizer detailSanitizer;
 
     public JsonProcessingExceptionMapper() {
-        this.includeDetails = false;
+        this.detailSanitizer = new DetailSanitizer();
     }
 
     @Inject
-    public JsonProcessingExceptionMapper(PostProcessorsRegistry postProcessorsRegistry, ProblemRuntimeFixedConfig config) {
+    public JsonProcessingExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
+            DetailSanitizer detailSanitizer) {
         super(postProcessorsRegistry);
-        this.includeDetails = config.includeDetails();
+        this.detailSanitizer = detailSanitizer;
     }
 
     @Override
     protected HttpProblem toProblem(JsonProcessingException exception) {
-        String detail = includeDetails
-                ? exception.getOriginalMessage()
-                : SANITIZED_DETAIL;
-        return HttpProblem.valueOf(BAD_REQUEST, detail);
+        return HttpProblem.valueOf(BAD_REQUEST, detailSanitizer.sanitize(exception.getOriginalMessage()));
     }
 }

@@ -64,6 +64,8 @@ class ProblemProcessorTest {
             "AuthenticationFailedException, authentication-failed-exception",
             "ConstraintViolationException, constraint-violation-exception",
             "JsonProcessingException, json-processing-exception",
+            "MismatchedInputException, mismatched-input-exception",
+            "InvalidDefinitionException, invalid-definition-exception",
             "Exception, exception"
     })
     void toKebabCaseShouldConvertClassNamesCorrectly(String input, String expected) {

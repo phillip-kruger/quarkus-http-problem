@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
 import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.HttpProblem;
@@ -19,15 +19,15 @@ import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
 
-class InvalidFormatExceptionMapperTest {
+class MismatchedInputExceptionMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
             List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
-    InvalidFormatExceptionMapper mapper = new InvalidFormatExceptionMapper(registry, new DetailSanitizer(true));
+    MismatchedInputExceptionMapper mapper = new MismatchedInputExceptionMapper(registry, new DetailSanitizer(true));
 
     @Test
     void shouldProduceHttp400WithFieldInfo() {
-        InvalidFormatException exception = buildExceptionWithPath(
+        MismatchedInputException exception = buildExceptionWithPath(
                 new JsonMappingException.Reference(this, "customFieldName"));
 
         Response response = mapper.toResponse(exception);
@@ -36,13 +36,13 @@ class InvalidFormatExceptionMapperTest {
         assertThat(response.getMediaType()).isEqualTo(HttpProblem.MEDIA_TYPE);
         assertThat(response.getEntity())
                 .isInstanceOf(HttpProblem.class)
-                .hasFieldOrPropertyWithValue("detail", "Invalid format of the field")
+                .hasFieldOrPropertyWithValue("detail", "Mismatched input")
                 .hasFieldOrPropertyWithValue("parameters.field", "customFieldName");
     }
 
     @Test
-    void invalidFormatInsideCollectionShouldShowValidPath() {
-        InvalidFormatException exception = buildExceptionWithPath(
+    void mismatchedInputInsideCollectionShouldShowValidPath() {
+        MismatchedInputException exception = buildExceptionWithPath(
                 new JsonMappingException.Reference(this, "collection"),
                 new JsonMappingException.Reference(this, 2),
                 new JsonMappingException.Reference(this, "customFieldName"));
@@ -56,7 +56,7 @@ class InvalidFormatExceptionMapperTest {
 
     @Test
     void emptyPathShouldNotCrash() {
-        InvalidFormatException exception = buildExceptionWithPath();
+        MismatchedInputException exception = buildExceptionWithPath();
 
         Response response = mapper.toResponse(exception);
 
@@ -67,8 +67,9 @@ class InvalidFormatExceptionMapperTest {
 
     @Test
     void shouldSanitizeDetailByDefault() {
-        InvalidFormatExceptionMapper sanitizedMapper = new InvalidFormatExceptionMapper(registry, new DetailSanitizer(false));
-        InvalidFormatException exception = buildExceptionWithPath(
+        MismatchedInputExceptionMapper sanitizedMapper = new MismatchedInputExceptionMapper(registry,
+                new DetailSanitizer(false));
+        MismatchedInputException exception = buildExceptionWithPath(
                 new JsonMappingException.Reference(this, "customFieldName"));
 
         Response response = sanitizedMapper.toResponse(exception);
@@ -82,24 +83,23 @@ class InvalidFormatExceptionMapperTest {
 
     @Test
     void shouldPreserveDetailWhenIncludeDetails() {
-        InvalidFormatException exception = buildExceptionWithPath(
+        MismatchedInputException exception = buildExceptionWithPath(
                 new JsonMappingException.Reference(this, "customFieldName"));
 
         Response response = mapper.toResponse(exception);
 
         assertThat(response.getEntity())
                 .isInstanceOf(HttpProblem.class)
-                .hasFieldOrPropertyWithValue("detail", "Invalid format of the field");
+                .hasFieldOrPropertyWithValue("detail", "Mismatched input");
     }
 
-    private InvalidFormatException buildExceptionWithPath(JsonMappingException.Reference... pathSegments) {
-        InvalidFormatException exception = new InvalidFormatException(mock(JsonParser.class),
-                "Invalid format of the field", this, this.getClass());
+    private MismatchedInputException buildExceptionWithPath(JsonMappingException.Reference... pathSegments) {
+        MismatchedInputException exception = MismatchedInputException.from(mock(JsonParser.class),
+                this.getClass(), "Mismatched input");
 
         for (int i = pathSegments.length - 1; i >= 0; --i) {
             exception.prependPath(pathSegments[i]);
         }
         return exception;
     }
-
 }

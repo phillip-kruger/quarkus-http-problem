@@ -14,8 +14,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
-@TestProfile(ConstraintViolationMapperConfigTest.CustomHttpStatus.class)
-class ConstraintViolationMapperConfigTest {
+@TestProfile(ConstraintViolationMapperConfigIT.CustomHttpStatus.class)
+class ConstraintViolationMapperConfigIT {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
