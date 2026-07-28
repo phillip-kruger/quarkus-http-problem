@@ -1,8 +1,6 @@
 package io.quarkiverse.httpproblem.jsonb;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -11,8 +9,8 @@ import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.Test;
 
+import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.HttpProblem;
-import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
@@ -24,7 +22,7 @@ class JsonbExceptionMapperTest {
 
     @Test
     void shouldProduceHttp400WithCauseMessageWhenIncludeDetails() {
-        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, configWith(true));
+        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, new DetailSanitizer(true));
         JsonbException exception = new JsonbException("wrapper", new RuntimeException("Invalid UUID string: ABC"));
 
         Response response = mapper.toResponse(exception);
@@ -38,7 +36,7 @@ class JsonbExceptionMapperTest {
 
     @Test
     void shouldSanitizeDetailByDefault() {
-        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, configWith(false));
+        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, new DetailSanitizer(false));
         JsonbException exception = new JsonbException("wrapper", new RuntimeException("Invalid UUID string: ABC"));
 
         Response response = mapper.toResponse(exception);
@@ -46,12 +44,12 @@ class JsonbExceptionMapperTest {
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(response.getEntity())
                 .isInstanceOf(HttpProblem.class)
-                .hasFieldOrPropertyWithValue("detail", JsonbExceptionMapper.SANITIZED_DETAIL);
+                .hasFieldOrPropertyWithValue("detail", DetailSanitizer.SANITIZED_DETAIL);
     }
 
     @Test
     void shouldPreserveDetailWhenIncludeDetails() {
-        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, configWith(true));
+        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, new DetailSanitizer(true));
         JsonbException exception = new JsonbException("wrapper", new RuntimeException("Internal error details"));
 
         Response response = mapper.toResponse(exception);
@@ -63,7 +61,7 @@ class JsonbExceptionMapperTest {
 
     @Test
     void shouldSanitizeEvenWithNoCause() {
-        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, configWith(false));
+        JsonbExceptionMapper mapper = new JsonbExceptionMapper(registry, new DetailSanitizer(false));
         JsonbException exception = new JsonbException("wrapper");
 
         Response response = mapper.toResponse(exception);
@@ -71,12 +69,6 @@ class JsonbExceptionMapperTest {
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(response.getEntity())
                 .isInstanceOf(HttpProblem.class)
-                .hasFieldOrPropertyWithValue("detail", JsonbExceptionMapper.SANITIZED_DETAIL);
-    }
-
-    private static ProblemRuntimeFixedConfig configWith(boolean includeDetails) {
-        ProblemRuntimeFixedConfig config = mock(ProblemRuntimeFixedConfig.class);
-        when(config.includeDetails()).thenReturn(includeDetails);
-        return config;
+                .hasFieldOrPropertyWithValue("detail", DetailSanitizer.SANITIZED_DETAIL);
     }
 }

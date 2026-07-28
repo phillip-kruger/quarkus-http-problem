@@ -8,7 +8,7 @@ import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-class MdcTest {
+class MdcIT {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();

@@ -5,34 +5,31 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.core.Response;
 
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
 import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.ExceptionMapperBase;
 import io.quarkiverse.httpproblem.HttpProblem;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 
-/**
- * Mapper for Jackson InvalidFormatException, which is more specialised version of JsonProcessingException
- */
 @Priority(Priorities.USER - 1)
-public final class InvalidFormatExceptionMapper extends ExceptionMapperBase<InvalidFormatException> {
+public final class MismatchedInputExceptionMapper extends ExceptionMapperBase<MismatchedInputException> {
 
     private final DetailSanitizer detailSanitizer;
 
-    public InvalidFormatExceptionMapper() {
+    public MismatchedInputExceptionMapper() {
         this.detailSanitizer = new DetailSanitizer();
     }
 
     @Inject
-    public InvalidFormatExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
+    public MismatchedInputExceptionMapper(PostProcessorsRegistry postProcessorsRegistry,
             DetailSanitizer detailSanitizer) {
         super(postProcessorsRegistry);
         this.detailSanitizer = detailSanitizer;
     }
 
     @Override
-    protected HttpProblem toProblem(InvalidFormatException exception) {
+    protected HttpProblem toProblem(MismatchedInputException exception) {
         return HttpProblem.builder()
                 .withStatus(Response.Status.BAD_REQUEST)
                 .withTitle(Response.Status.BAD_REQUEST.getReasonPhrase())

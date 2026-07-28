@@ -14,6 +14,7 @@ import org.eclipse.microprofile.openapi.OASFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
 import io.quarkiverse.httpproblem.postprocessing.MdcPropertiesInjector;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
@@ -88,6 +89,12 @@ public class ProblemProcessor {
                         .onlyIf(new JacksonDetector()),
                 mapper(EXTENSION_MAIN_PACKAGE + "jackson.InvalidFormatExceptionMapper")
                         .thatHandles("com.fasterxml.jackson.databind.exc.InvalidFormatException")
+                        .onlyIf(new JacksonDetector()),
+                mapper(EXTENSION_MAIN_PACKAGE + "jackson.MismatchedInputExceptionMapper")
+                        .thatHandles("com.fasterxml.jackson.databind.exc.MismatchedInputException")
+                        .onlyIf(new JacksonDetector()),
+                mapper(EXTENSION_MAIN_PACKAGE + "jackson.InvalidDefinitionExceptionMapper")
+                        .thatHandles("com.fasterxml.jackson.databind.exc.InvalidDefinitionException")
                         .onlyIf(new JacksonDetector()),
 
                 mapper(EXTENSION_MAIN_PACKAGE + "jsonb.RestEasyClassicJsonbExceptionMapper")
@@ -223,6 +230,7 @@ public class ProblemProcessor {
         additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(ProblemLogger.class));
         additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(ProblemDefaultsProvider.class));
         additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(MdcPropertiesInjector.class));
+        additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(DetailSanitizer.class));
     }
 
     @BuildStep

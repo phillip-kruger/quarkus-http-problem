@@ -16,7 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
-class Rfc9457AboutBlankTest {
+class Rfc9457AboutBlankIT {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();

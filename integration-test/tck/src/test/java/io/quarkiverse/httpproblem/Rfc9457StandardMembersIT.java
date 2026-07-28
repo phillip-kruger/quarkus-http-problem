@@ -17,7 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
-class Rfc9457StandardMembersTest {
+class Rfc9457StandardMembersIT {
 
     static {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();

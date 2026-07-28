@@ -3,5 +3,5 @@ package io.quarkiverse.httpproblem;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 
 @QuarkusIntegrationTest
-class SecurityMappersNativeIT extends SecurityMappersTest {
+class SecurityMappersNativeIT extends SecurityMappersIT {
 }

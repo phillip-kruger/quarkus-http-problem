@@ -13,7 +13,7 @@ import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-class ValidationMappersTest {
+class ValidationMappersIT {
 
     static final String SAMPLE_DETAIL = "A small one";
     final String TOO_SHORT_NAME = "N";
