@@ -6,6 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
+import org.jboss.logging.Logger;
+
 import io.quarkiverse.httpproblem.HttpProblem;
 
 /**
@@ -14,6 +16,8 @@ import io.quarkiverse.httpproblem.HttpProblem;
  */
 @ApplicationScoped
 public class PostProcessorsRegistry {
+
+    private static final Logger LOG = Logger.getLogger(PostProcessorsRegistry.class);
 
     private final List<ProblemPostProcessor> processors;
 
@@ -33,7 +37,12 @@ public class PostProcessorsRegistry {
     public HttpProblem applyPostProcessing(HttpProblem problem, ProblemContext context) {
         HttpProblem finalProblem = problem;
         for (ProblemPostProcessor processor : processors) {
-            finalProblem = processor.apply(finalProblem, context);
+            try {
+                finalProblem = processor.apply(finalProblem, context);
+            } catch (Exception e) {
+                LOG.warnf(e, "Post-processor %s failed for status %d, skipping",
+                        processor.getClass().getName(), finalProblem.getStatusCode());
+            }
         }
         return finalProblem;
     }

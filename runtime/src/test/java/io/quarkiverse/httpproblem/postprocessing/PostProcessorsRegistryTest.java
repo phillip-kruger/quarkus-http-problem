@@ -44,8 +44,62 @@ class PostProcessorsRegistryTest {
         assertThat(invocations).containsExactly(HIGHEST, MEDIUM, MEDIUM, MEDIUM);
     }
 
+    @Test
+    void shouldSkipFailingProcessorAndContinue() {
+        PostProcessorsRegistry registry = new PostProcessorsRegistry(List.of(
+                processorWithPriority(HIGHEST),
+                failingProcessor(MEDIUM),
+                processorWithPriority(LOW)));
+
+        HttpProblem result = registry.applyPostProcessing(badRequestProblem(), simpleContext());
+
+        assertThat(invocations).containsExactly(HIGHEST, LOW);
+        assertThat(result.getStatusCode()).isEqualTo(400);
+    }
+
+    @Test
+    void shouldPreserveProblemStateWhenProcessorFails() {
+        ProblemPostProcessor modifyThenFail = new ProblemPostProcessor() {
+            @Override
+            public HttpProblem apply(HttpProblem problem, ProblemContext context) {
+                invocations.add(MEDIUM);
+                throw new RuntimeException("boom");
+            }
+
+            @Override
+            public int priority() {
+                return MEDIUM;
+            }
+        };
+
+        PostProcessorsRegistry registry = new PostProcessorsRegistry(List.of(
+                processorWithPriority(HIGHEST),
+                modifyThenFail,
+                processorWithPriority(LOW)));
+
+        HttpProblem original = badRequestProblem();
+        HttpProblem result = registry.applyPostProcessing(original, simpleContext());
+
+        assertThat(invocations).containsExactly(HIGHEST, MEDIUM, LOW);
+        assertThat(result).isSameAs(original);
+    }
+
     ProblemPostProcessor processorWithPriority(int priority) {
         return new TestProcessor(priority);
+    }
+
+    ProblemPostProcessor failingProcessor(int priority) {
+        return new ProblemPostProcessor() {
+            @Override
+            public HttpProblem apply(HttpProblem problem, ProblemContext context) {
+                throw new RuntimeException("processor failed");
+            }
+
+            @Override
+            public int priority() {
+                return priority;
+            }
+        };
     }
 
     class TestProcessor implements ProblemPostProcessor {
