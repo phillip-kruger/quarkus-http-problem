@@ -8,8 +8,7 @@ import java.util.stream.Stream;
 
 import jakarta.inject.Singleton;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.httpproblem.HttpProblem;
 
@@ -19,7 +18,7 @@ public class ProblemLogger implements ProblemPostProcessor {
     private final Logger logger;
 
     public ProblemLogger() {
-        this(LoggerFactory.getLogger("http-problem"));
+        this(Logger.getLogger("http-problem"));
     }
 
     ProblemLogger(Logger logger) {
@@ -29,7 +28,7 @@ public class ProblemLogger implements ProblemPostProcessor {
     @Override
     public HttpProblem apply(HttpProblem problem, ProblemContext context) {
         if (problem.getStatusCode() >= 500) {
-            if (logger.isErrorEnabled()) {
+            if (logger.isEnabled(Logger.Level.ERROR)) {
                 logger.error(serialize(problem), context.cause);
             }
         } else {

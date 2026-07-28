@@ -12,9 +12,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
+import org.jboss.logging.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 
 import io.quarkiverse.httpproblem.HttpProblem;
 import io.quarkiverse.httpproblem.validation.Violation;
@@ -26,7 +26,7 @@ class ProblemLoggerTest {
 
     @BeforeEach
     void init() {
-        when(logger.isErrorEnabled()).thenReturn(true);
+        when(logger.isEnabled(Logger.Level.ERROR)).thenReturn(true);
         when(logger.isInfoEnabled()).thenReturn(true);
     }
 
@@ -73,7 +73,7 @@ class ProblemLoggerTest {
 
     @Test
     void shouldLog4xxAtInfoWhenErrorIsDisabled() {
-        when(logger.isErrorEnabled()).thenReturn(false);
+        when(logger.isEnabled(Logger.Level.ERROR)).thenReturn(false);
         when(logger.isInfoEnabled()).thenReturn(true);
 
         HttpProblem problem = HttpProblem.builder()
@@ -88,7 +88,7 @@ class ProblemLoggerTest {
 
     @Test
     void shouldNotLog4xxWhenInfoIsDisabled() {
-        when(logger.isErrorEnabled()).thenReturn(true);
+        when(logger.isEnabled(Logger.Level.ERROR)).thenReturn(true);
         when(logger.isInfoEnabled()).thenReturn(false);
 
         HttpProblem problem = HttpProblem.builder()
@@ -103,7 +103,7 @@ class ProblemLoggerTest {
 
     @Test
     void shouldNotLog5xxWhenErrorIsDisabled() {
-        when(logger.isErrorEnabled()).thenReturn(false);
+        when(logger.isEnabled(Logger.Level.ERROR)).thenReturn(false);
         when(logger.isInfoEnabled()).thenReturn(true);
 
         HttpProblem problem = HttpProblem.builder()
