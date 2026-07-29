@@ -3,7 +3,6 @@ package io.quarkiverse.httpproblem.deployment;
 import static io.quarkiverse.httpproblem.deployment.ExceptionMapperDefinition.mapper;
 import static io.quarkus.deployment.annotations.ExecutionTime.STATIC_INIT;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +13,6 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.Priorities;
 
 import org.eclipse.microprofile.openapi.OASFilter;
-
-import io.quarkus.runtime.configuration.ConfigurationException;
 
 import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
@@ -31,6 +28,7 @@ import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.SyntheticBeanBuildItem;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.deployment.Capabilities;
+import io.quarkus.deployment.Capability;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.Record;
@@ -43,6 +41,7 @@ import io.quarkus.resteasy.common.spi.ResteasyJaxrsProviderBuildItem;
 import io.quarkus.resteasy.reactive.spi.CustomExceptionMapperBuildItem;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
 import io.quarkus.runtime.RuntimeValue;
+import io.quarkus.runtime.configuration.ConfigurationException;
 import io.quarkus.smallrye.openapi.deployment.spi.AddToOpenAPIDefinitionBuildItem;
 
 public class ProblemProcessor {
@@ -50,16 +49,7 @@ public class ProblemProcessor {
     private static final String FEATURE_NAME = "http-problem";
     private static final String EXTENSION_MAIN_PACKAGE = "io.quarkiverse.httpproblem.";
 
-    /**
-     * Don't change this to constants from Capability for the sake of older Quarkus versions
-     */
-    private static final List<String> REST_JSON_CAPABILITIES = Arrays.asList(
-            "io.quarkus.jsonb",
-            "io.quarkus.jackson",
-            "io.quarkus.resteasy.json",
-            "io.quarkus.resteasy-json");
-
-    private static List<ExceptionMapperDefinition> neededExceptionMappers(ProblemBuildConfig config) {
+    static List<ExceptionMapperDefinition> neededExceptionMappers(ProblemBuildConfig config, Capabilities capabilities) {
         Map<String, ProblemBuildConfig.MapperConfig> mapperConfig = config.mapper();
 
         Stream<ExceptionMapperDefinition> allMappers = Stream.of(
@@ -74,9 +64,9 @@ public class ProblemProcessor {
                         .thatHandles("jakarta.ws.rs.NotFoundException"),
 
                 mapper(EXTENSION_MAIN_PACKAGE + "security.UnauthorizedExceptionMapper")
-                        .thatHandles("io.quarkus.security.UnauthorizedException").onlyIf(new RestEasyClassicDetector()),
+                        .thatHandles("io.quarkus.security.UnauthorizedException").onlyIf(Capability.RESTEASY),
                 mapper(EXTENSION_MAIN_PACKAGE + "security.AuthenticationFailedExceptionMapper")
-                        .thatHandles("io.quarkus.security.AuthenticationFailedException").onlyIf(new RestEasyClassicDetector()),
+                        .thatHandles("io.quarkus.security.AuthenticationFailedException").onlyIf(Capability.RESTEASY),
                 mapper(EXTENSION_MAIN_PACKAGE + "security.AuthenticationRedirectExceptionMapper")
                         .thatHandles("io.quarkus.security.AuthenticationRedirectException"),
                 mapper(EXTENSION_MAIN_PACKAGE + "security.AuthenticationCompletionExceptionMapper")
@@ -92,27 +82,27 @@ public class ProblemProcessor {
 
                 mapper(EXTENSION_MAIN_PACKAGE + "jackson.JsonProcessingExceptionMapper")
                         .thatHandles("com.fasterxml.jackson.core.JsonProcessingException")
-                        .onlyIf(new JacksonDetector()),
+                        .onlyIf(Capability.JACKSON),
                 mapper(EXTENSION_MAIN_PACKAGE + "jackson.UnrecognizedPropertyExceptionMapper")
                         .thatHandles("com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException")
-                        .onlyIf(new JacksonDetector()),
+                        .onlyIf(Capability.JACKSON),
                 mapper(EXTENSION_MAIN_PACKAGE + "jackson.InvalidFormatExceptionMapper")
                         .thatHandles("com.fasterxml.jackson.databind.exc.InvalidFormatException")
-                        .onlyIf(new JacksonDetector()),
+                        .onlyIf(Capability.JACKSON),
                 mapper(EXTENSION_MAIN_PACKAGE + "jackson.MismatchedInputExceptionMapper")
                         .thatHandles("com.fasterxml.jackson.databind.exc.MismatchedInputException")
-                        .onlyIf(new JacksonDetector()),
+                        .onlyIf(Capability.JACKSON),
                 mapper(EXTENSION_MAIN_PACKAGE + "jackson.InvalidDefinitionExceptionMapper")
                         .thatHandles("com.fasterxml.jackson.databind.exc.InvalidDefinitionException")
-                        .onlyIf(new JacksonDetector()),
+                        .onlyIf(Capability.JACKSON),
 
                 mapper(EXTENSION_MAIN_PACKAGE + "jsonb.RestEasyClassicJsonbExceptionMapper")
                         .thatHandles("jakarta.ws.rs.ProcessingException")
-                        .onlyIf(new JsonBDetector()),
+                        .onlyIf(Capability.JSONB),
 
                 mapper(EXTENSION_MAIN_PACKAGE + "jsonb.JsonbExceptionMapper")
                         .thatHandles("jakarta.json.bind.JsonbException")
-                        .onlyIf(new JsonBDetector()),
+                        .onlyIf(Capability.JSONB),
 
                 mapper(EXTENSION_MAIN_PACKAGE + "ZalandoProblemMapper")
                         .thatHandles("org.zalando.problem.ThrowableProblem"),
@@ -121,7 +111,7 @@ public class ProblemProcessor {
                         .thatHandles("java.lang.Exception"));
 
         return allMappers
-                .filter(ExceptionMapperDefinition::isNeeded)
+                .filter(mapper -> mapper.isNeeded(capabilities))
                 .filter(mapper -> isMapperEnabled(mapper.exceptionClassName, mapperConfig))
                 .collect(Collectors.toList());
     }
@@ -146,7 +136,7 @@ public class ProblemProcessor {
 
     @BuildStep
     FeatureBuildItem createFeature(Capabilities capabilities) {
-        if (REST_JSON_CAPABILITIES.stream().noneMatch(capabilities::isPresent)) {
+        if (!capabilities.isPresent(Capability.JACKSON) && !capabilities.isPresent(Capability.JSONB)) {
             throw new ConfigurationException(
                     "The `quarkus-http-problem` extension requires a JSON provider. Please add "
                             + "`quarkus-rest-jackson` or `quarkus-rest-jsonb` (or classic `resteasy` equivalent) extension to your project.");
@@ -154,20 +144,25 @@ public class ProblemProcessor {
         return new FeatureBuildItem(FEATURE_NAME);
     }
 
-    @BuildStep(onlyIf = RestEasyClassicDetector.class)
-    void registerMappersForClassic(BuildProducer<ResteasyJaxrsProviderBuildItem> providers, ProblemBuildConfig config,
-            BuildProducer<AdditionalBeanBuildItem> additionalBeans) {
-        neededExceptionMappers(config).forEach(mapper -> {
+    @BuildStep
+    void registerMappersForClassic(Capabilities capabilities, BuildProducer<ResteasyJaxrsProviderBuildItem> providers,
+            ProblemBuildConfig config, BuildProducer<AdditionalBeanBuildItem> additionalBeans) {
+        if (!capabilities.isPresent(Capability.RESTEASY)) {
+            return;
+        }
+        neededExceptionMappers(config, capabilities).forEach(mapper -> {
             providers.produce(new ResteasyJaxrsProviderBuildItem(mapper.mapperClassName));
             additionalBeans.produce(new AdditionalBeanBuildItem(mapper.mapperClassName));
         });
-
     }
 
-    @BuildStep(onlyIf = RestEasyReactiveDetector.class)
-    void registerMappersForReactive(BuildProducer<ExceptionMapperBuildItem> providers, ProblemBuildConfig config,
-            BuildProducer<AdditionalBeanBuildItem> additionalBeans) {
-        neededExceptionMappers(config).forEach(mapper -> {
+    @BuildStep
+    void registerMappersForReactive(Capabilities capabilities, BuildProducer<ExceptionMapperBuildItem> providers,
+            ProblemBuildConfig config, BuildProducer<AdditionalBeanBuildItem> additionalBeans) {
+        if (!capabilities.isPresent(Capability.RESTEASY_REACTIVE)) {
+            return;
+        }
+        neededExceptionMappers(config, capabilities).forEach(mapper -> {
             providers.produce(
                     new ExceptionMapperBuildItem(mapper.mapperClassName,
                             mapper.exceptionClassName, Priorities.AUTHENTICATION - 1, true));
@@ -175,9 +170,13 @@ public class ProblemProcessor {
         });
     }
 
-    @BuildStep(onlyIf = RestEasyReactiveDetector.class)
-    void registerCustomExceptionMappers(BuildProducer<CustomExceptionMapperBuildItem> customExceptionMapper,
+    @BuildStep
+    void registerCustomExceptionMappers(Capabilities capabilities,
+            BuildProducer<CustomExceptionMapperBuildItem> customExceptionMapper,
             ProblemBuildConfig config, BuildProducer<AdditionalBeanBuildItem> additionalBeans) {
+        if (!capabilities.isPresent(Capability.RESTEASY_REACTIVE)) {
+            return;
+        }
         String unauthorized = EXTENSION_MAIN_PACKAGE + "security.UnauthorizedExceptionReactiveMapper";
         String authentication = EXTENSION_MAIN_PACKAGE + "security.AuthenticationFailedExceptionReactiveMapper";
 
@@ -193,15 +192,21 @@ public class ProblemProcessor {
         }
     }
 
-    @BuildStep(onlyIf = JacksonDetector.class)
-    void registerJacksonItems(BuildProducer<AdditionalBeanBuildItem> additionalBeans) {
+    @BuildStep
+    void registerJacksonItems(Capabilities capabilities, BuildProducer<AdditionalBeanBuildItem> additionalBeans) {
+        if (!capabilities.isPresent(Capability.JACKSON)) {
+            return;
+        }
         additionalBeans.produce(new AdditionalBeanBuildItem(
                 EXTENSION_MAIN_PACKAGE + "jackson.JacksonProblemModuleRegistrar"));
     }
 
-    @BuildStep(onlyIf = JsonBDetector.class)
-    void registerJsonbItems(BuildProducer<JsonbSerializerBuildItem> serializers,
+    @BuildStep
+    void registerJsonbItems(Capabilities capabilities, BuildProducer<JsonbSerializerBuildItem> serializers,
             BuildProducer<JsonbDeserializerBuildItem> deserializers) {
+        if (!capabilities.isPresent(Capability.JSONB)) {
+            return;
+        }
         serializers.produce(
                 new JsonbSerializerBuildItem(EXTENSION_MAIN_PACKAGE + "jsonb.JsonbProblemSerializer"));
         deserializers.produce(
@@ -213,14 +218,20 @@ public class ProblemProcessor {
      * It's an equivalent to adding beans.xml to runtime's module resources, but this has advantage of being enabled
      * conditionally: only if openapi is in the classpath.
      */
-    @BuildStep(onlyIf = OpenApiDetector.class)
-    void indexOpenApiClasses(BuildProducer<IndexDependencyBuildItem> indexDependency) {
+    @BuildStep
+    void indexOpenApiClasses(Capabilities capabilities, BuildProducer<IndexDependencyBuildItem> indexDependency) {
+        if (!capabilities.isPresent(Capability.SMALLRYE_OPENAPI)) {
+            return;
+        }
         indexDependency.produce(new IndexDependencyBuildItem("io.quarkiverse.httpproblem", "quarkus-http-problem"));
     }
 
-    @BuildStep(onlyIf = OpenApiDetector.class)
-    void registerOpenApiFilter(BuildProducer<AddToOpenAPIDefinitionBuildItem> openAPIProducer,
+    @BuildStep
+    void registerOpenApiFilter(Capabilities capabilities, BuildProducer<AddToOpenAPIDefinitionBuildItem> openAPIProducer,
             ProblemBuildConfig config, ProblemRuntimeFixedConfig runtimeConfig) {
+        if (!capabilities.isPresent(Capability.SMALLRYE_OPENAPI)) {
+            return;
+        }
         OASFilter filter = new OpenApiProblemFilter(config, runtimeConfig);
         openAPIProducer.produce(new AddToOpenAPIDefinitionBuildItem(filter));
     }
