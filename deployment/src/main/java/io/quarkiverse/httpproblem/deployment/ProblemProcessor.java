@@ -11,7 +11,8 @@ import java.util.stream.Stream;
 import jakarta.ws.rs.Priorities;
 
 import org.eclipse.microprofile.openapi.OASFilter;
-import org.jboss.logging.Logger;
+
+import io.quarkus.runtime.configuration.ConfigurationException;
 
 import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
@@ -137,8 +138,9 @@ public class ProblemProcessor {
     @BuildStep
     FeatureBuildItem createFeature(Capabilities capabilities) {
         if (REST_JSON_CAPABILITIES.stream().noneMatch(capabilities::isPresent)) {
-            logger().error("`quarkus-http-problem` extension is useless without json provider. Please add "
-                    + "`quarkus-rest-jackson` or `quarkus-rest-jsonb` (or classic `resteasy` equivalent) extension to your project.");
+            throw new ConfigurationException(
+                    "The `quarkus-http-problem` extension requires a JSON provider. Please add "
+                            + "`quarkus-rest-jackson` or `quarkus-rest-jsonb` (or classic `resteasy` equivalent) extension to your project.");
         }
         return new FeatureBuildItem(FEATURE_NAME);
     }
@@ -235,9 +237,5 @@ public class ProblemProcessor {
     @BuildStep
     UnremovableBeanBuildItem markPostProcessorsUnremovable() {
         return UnremovableBeanBuildItem.beanTypes(ProblemPostProcessor.class);
-    }
-
-    protected Logger logger() {
-        return Logger.getLogger(FEATURE_NAME);
     }
 }
