@@ -29,8 +29,8 @@ public class ThrowingHttpProblemClientExceptionMapper implements ResponseExcepti
             return HttpProblem.builder(returnedProblem)
                     .withInstance(null)
                     .build();
-        } catch (Exception e) {
-            log.debug("Failed to deserialize application/problem+json response body", e);
+        } catch (RuntimeException e) {
+            log.warn("Failed to deserialize application/problem+json response body", e);
             return null; // Let others handle unreadable responses
         }
     }
