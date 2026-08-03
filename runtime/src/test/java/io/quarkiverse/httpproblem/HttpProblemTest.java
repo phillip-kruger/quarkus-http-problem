@@ -50,4 +50,19 @@ class HttpProblemTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = { 100, 200, 301, 400, 404, 500, 599 })
+    void withStatusShouldAcceptValidStatusCodes(int statusCode) {
+        HttpProblem problem = HttpProblem.builder().withStatus(statusCode).build();
+        assertThat(problem.getStatusCode()).isEqualTo(statusCode);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { -1, 0, 99, 600, 1000, Integer.MAX_VALUE, Integer.MIN_VALUE })
+    void withStatusShouldRejectInvalidStatusCodes(int statusCode) {
+        assertThatThrownBy(() -> HttpProblem.builder().withStatus(statusCode))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(String.valueOf(statusCode));
+    }
+
 }
