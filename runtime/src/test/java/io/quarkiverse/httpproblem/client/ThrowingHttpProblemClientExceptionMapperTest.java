@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.ws.rs.core.Response;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -60,6 +61,33 @@ class ThrowingHttpProblemClientExceptionMapperTest {
 
         // when
         Throwable mappedThrowable = mapper.toThrowable(nonProblemResponse);
+
+        // then
+        assertThat(mappedThrowable).isNull();
+    }
+
+    @Test
+    void shouldReturnNullWhenDeserializationFails() {
+        // given - a response that claims to be problem+json but has an unreadable entity
+        Response badProblemResponse = Response.status(500)
+                .type(HttpProblem.MEDIA_TYPE)
+                .entity("not valid json")
+                .build();
+
+        // when
+        Throwable mappedThrowable = mapper.toThrowable(badProblemResponse);
+
+        // then - returns null so other mappers can handle it
+        assertThat(mappedThrowable).isNull();
+    }
+
+    @Test
+    void shouldReturnNullForNullMediaType() {
+        // given
+        Response noMediaType = Response.status(400).build();
+
+        // when
+        Throwable mappedThrowable = mapper.toThrowable(noMediaType);
 
         // then
         assertThat(mappedThrowable).isNull();

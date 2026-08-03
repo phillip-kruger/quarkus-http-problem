@@ -1,5 +1,6 @@
 package io.quarkiverse.httpproblem.client;
 
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -29,8 +30,8 @@ public class ThrowingHttpProblemClientExceptionMapper implements ResponseExcepti
             return HttpProblem.builder(returnedProblem)
                     .withInstance(null)
                     .build();
-        } catch (Exception e) {
-            log.debug("Failed to deserialize application/problem+json response body", e);
+        } catch (ProcessingException | IllegalStateException e) {
+            log.warn("Failed to deserialize application/problem+json response body", e);
             return null; // Let others handle unreadable responses
         }
     }
