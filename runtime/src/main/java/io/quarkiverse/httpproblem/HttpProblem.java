@@ -181,8 +181,7 @@ public class HttpProblem extends RuntimeException {
 
         public Builder withStatus(Response.StatusType status) {
             Objects.requireNonNull(status);
-            this.statusCode = status.getStatusCode();
-            return this;
+            return withStatus(status.getStatusCode());
         }
 
         public Builder withStatus(int statusCode) {
