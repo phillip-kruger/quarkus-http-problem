@@ -13,15 +13,19 @@ import io.quarkiverse.httpproblem.HttpProblem;
 public class HttpValidationProblem extends HttpProblem {
 
     @Schema(description = "List of validation constraint violations that occurred")
-    List<Violation> violations;
+    private final List<Violation> violations;
 
     public HttpValidationProblem(int status, String title, List<Violation> violations) {
         super(
                 HttpProblem.builder()
                         .withStatus(status)
                         .withTitle(title)
-                        .with("violations", violations));
-        this.violations = violations;
+                        .with("violations", List.copyOf(violations)));
+        this.violations = List.copyOf(violations);
+    }
+
+    public List<Violation> getViolations() {
+        return violations;
     }
 
 }
