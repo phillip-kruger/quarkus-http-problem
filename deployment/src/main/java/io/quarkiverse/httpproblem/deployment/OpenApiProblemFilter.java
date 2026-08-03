@@ -2,6 +2,8 @@ package io.quarkiverse.httpproblem.deployment;
 
 import static io.quarkiverse.httpproblem.validation.ConstraintViolationExceptionMapper.HTTP_VALIDATION_PROBLEM_STATUS_CODE;
 
+import java.util.Map;
+
 import org.eclipse.microprofile.openapi.OASFactory;
 import org.eclipse.microprofile.openapi.OASFilter;
 import org.eclipse.microprofile.openapi.models.Operation;
@@ -47,37 +49,36 @@ public class OpenApiProblemFilter implements OASFilter {
             operation.getResponses().addAPIResponse(String.valueOf(runtimeConfig.constraintViolation().status()), response);
             operation.getResponses().removeAPIResponse(HTTP_VALIDATION_PROBLEM_STATUS_CODE);
         }
+
+        addProblemContentToErrorResponses(operation);
+
         return operation;
     }
 
     /**
-     * Augments HttpProblem schema for 4xx and 5xx error @ApiResponses that don't have explicit @Content defined
+     * Augments HttpProblem schema for 4xx and 5xx error @ApiResponses that don't have explicit @Content defined.
      */
-    @Override
-    public APIResponse filterAPIResponse(APIResponse apiResponse) {
-        if (apiResponse == null || apiResponse.getRef() != null || apiResponse.getContent() != null) {
-            return apiResponse;
+    private void addProblemContentToErrorResponses(Operation operation) {
+        Map<String, APIResponse> responses = operation.getResponses().getAPIResponses();
+        if (responses == null) {
+            return;
         }
 
-        if (!(apiResponse instanceof io.smallrye.openapi.internal.models.responses.APIResponse internalResponse)) {
-            return apiResponse;
-        }
-
-        String responseCode = (String) internalResponse.getExtension("x-smallrye-private-response-code");
-        if (responseCode == null || responseCode.isEmpty()) {
-            return apiResponse;
-        }
-
-        try {
-            int httpStatus = Integer.parseInt(responseCode);
-            if (httpStatus >= 400) {
-                apiResponse.setContent(problemContent);
+        for (Map.Entry<String, APIResponse> entry : responses.entrySet()) {
+            APIResponse apiResponse = entry.getValue();
+            if (apiResponse == null || apiResponse.getRef() != null || apiResponse.getContent() != null) {
+                continue;
             }
-        } catch (NumberFormatException e) {
-            return apiResponse;
-        }
 
-        return apiResponse;
+            try {
+                int httpStatus = Integer.parseInt(entry.getKey());
+                if (httpStatus >= 400) {
+                    apiResponse.setContent(problemContent);
+                }
+            } catch (NumberFormatException e) {
+                // skip non-numeric codes like "default"
+            }
+        }
     }
 
     private static Content createContent(String schemaName) {
