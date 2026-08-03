@@ -1,7 +1,8 @@
 package io.quarkiverse.httpproblem.deployment;
 
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
+
+import io.quarkus.deployment.Capabilities;
 
 final class ExceptionMapperDefinition {
 
@@ -19,25 +20,28 @@ final class ExceptionMapperDefinition {
 
         ExceptionMapperDefinition thatHandles(String exception) {
             Objects.requireNonNull(exception);
-            return new ExceptionMapperDefinition(exception, this.mapper, new ClasspathDetector(exception));
+            return new ExceptionMapperDefinition(exception, this.mapper, null);
         }
     }
 
     final String exceptionClassName;
     final String mapperClassName;
-    private final BooleanSupplier detector;
+    private final String requiredCapability;
 
-    private ExceptionMapperDefinition(String exceptionClassName, String mapperClassName, BooleanSupplier detector) {
+    private ExceptionMapperDefinition(String exceptionClassName, String mapperClassName, String requiredCapability) {
         this.exceptionClassName = exceptionClassName;
         this.mapperClassName = mapperClassName;
-        this.detector = detector;
+        this.requiredCapability = requiredCapability;
     }
 
-    ExceptionMapperDefinition onlyIf(BooleanSupplier newDetector) {
-        return new ExceptionMapperDefinition(this.exceptionClassName, this.mapperClassName, newDetector);
+    ExceptionMapperDefinition onlyIf(String capability) {
+        return new ExceptionMapperDefinition(this.exceptionClassName, this.mapperClassName, capability);
     }
 
-    boolean isNeeded() {
-        return this.detector.getAsBoolean();
+    boolean isNeeded(Capabilities capabilities) {
+        if (requiredCapability != null && !capabilities.isPresent(requiredCapability)) {
+            return false;
+        }
+        return new ClasspathDetector(exceptionClassName).getAsBoolean();
     }
 }
