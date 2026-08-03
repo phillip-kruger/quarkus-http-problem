@@ -11,11 +11,12 @@ import org.junit.jupiter.api.Test;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
+import io.quarkiverse.httpproblem.postprocessing.ProblemLoggingConfig;
 
 class HttpProblemMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
-            List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
+            List.of(new ProblemLogger(ProblemLoggingConfig.defaults()), new ProblemDefaultsProvider()));
     HttpProblemMapper mapper = new HttpProblemMapper(registry);
 
     @Test

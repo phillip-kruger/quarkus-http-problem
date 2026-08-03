@@ -12,13 +12,14 @@ import org.junit.jupiter.api.Test;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
+import io.quarkiverse.httpproblem.postprocessing.ProblemLoggingConfig;
 import io.quarkus.security.AuthenticationFailedException;
 import io.quarkus.vertx.http.runtime.CurrentVertxRequest;
 
 class AuthenticationFailedExceptionMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
-            List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
+            List.of(new ProblemLogger(ProblemLoggingConfig.defaults()), new ProblemDefaultsProvider()));
     CurrentVertxRequest currentVertxRequest = mock(CurrentVertxRequest.class);
     AuthenticationFailedExceptionMapper mapper = new AuthenticationFailedExceptionMapper(registry, currentVertxRequest);
 

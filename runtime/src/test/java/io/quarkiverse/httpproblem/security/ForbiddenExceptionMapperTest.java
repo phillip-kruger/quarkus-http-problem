@@ -11,12 +11,13 @@ import org.junit.jupiter.api.Test;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
+import io.quarkiverse.httpproblem.postprocessing.ProblemLoggingConfig;
 import io.quarkus.security.ForbiddenException;
 
 class ForbiddenExceptionMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
-            List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
+            List.of(new ProblemLogger(ProblemLoggingConfig.defaults()), new ProblemDefaultsProvider()));
     ForbiddenExceptionMapper mapper = new ForbiddenExceptionMapper(registry);
 
     @Test

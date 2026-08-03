@@ -34,6 +34,7 @@ import io.quarkiverse.httpproblem.postprocessing.MdcPropertiesInjector;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
+import io.quarkiverse.httpproblem.postprocessing.ProblemLoggingConfig;
 
 /**
  * JMH benchmark for selected exception Mapper with all post-processors enabled + junit runner test for convenience.
@@ -59,7 +60,7 @@ public class ProblemMapperBenchmark {
         @Setup(Level.Trial)
         public void initMapper() {
             PostProcessorsRegistry registry = new PostProcessorsRegistry(List.of(
-                    new ProblemLogger(),
+                    new ProblemLogger(ProblemLoggingConfig.defaults()),
                     new ProblemDefaultsProvider(),
                     new MdcPropertiesInjector(Set.of("uuid"))));
             mapper = new HttpProblemMapper(registry);

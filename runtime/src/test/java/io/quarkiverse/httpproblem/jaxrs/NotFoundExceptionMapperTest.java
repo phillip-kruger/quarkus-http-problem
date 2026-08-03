@@ -12,11 +12,12 @@ import org.junit.jupiter.api.Test;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
+import io.quarkiverse.httpproblem.postprocessing.ProblemLoggingConfig;
 
 class NotFoundExceptionMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
-            List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
+            List.of(new ProblemLogger(ProblemLoggingConfig.defaults()), new ProblemDefaultsProvider()));
     NotFoundExceptionMapper mapper = new NotFoundExceptionMapper(registry);
 
     @Test

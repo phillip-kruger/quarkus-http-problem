@@ -2,50 +2,47 @@ package io.quarkiverse.httpproblem.postprocessing;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import jakarta.inject.Singleton;
 
 import org.jboss.logging.Logger;
 
 import io.quarkiverse.httpproblem.HttpProblem;
 
-@Singleton
 public class ProblemLogger implements ProblemPostProcessor {
 
     private final Logger logger;
+    private final ProblemLoggingConfig config;
 
-    public ProblemLogger() {
-        this(Logger.getLogger("http-problem"));
+    public ProblemLogger(ProblemLoggingConfig config) {
+        this(Logger.getLogger("http-problem"), config);
     }
 
-    ProblemLogger(Logger logger) {
+    ProblemLogger(Logger logger, ProblemLoggingConfig config) {
         this.logger = logger;
+        this.config = config;
     }
 
     @Override
     public HttpProblem apply(HttpProblem problem, ProblemContext context) {
-        if (problem.getStatusCode() >= 500) {
-            if (logger.isEnabled(Logger.Level.ERROR)) {
-                logger.error(serialize(problem), context.cause);
-            }
+        int statusCode = problem.getStatusCode();
+        ProblemLogLevel level = config.resolveLevel(statusCode);
+        String message = serialize(problem);
+        if (config.includeStackTrace(statusCode)) {
+            level.log(logger, message, context.cause);
         } else {
-            if (logger.isInfoEnabled()) {
-                logger.info(serialize(problem));
-            }
+            level.log(logger, message);
         }
         return problem;
     }
 
     private String serialize(HttpProblem problem) {
         Stream<String> basicFields = Stream.of(
-                ("status=" + problem.getStatusCode()),
-                (problem.getTitle() == null) ? null : ("title=\"" + problem.getTitle() + "\""),
-                (problem.getDetail() == null) ? null : ("detail=\"" + problem.getDetail() + "\""),
-                (problem.getInstance() == null) ? null : ("instance=\"" + problem.getInstance() + "\""),
-                (problem.getType() == null) ? null : "type=" + problem.getType().toString());
+                "status=" + problem.getStatusCode(),
+                problem.getTitle() == null ? null : "title=\"" + problem.getTitle() + "\"",
+                problem.getDetail() == null ? null : "detail=\"" + problem.getDetail() + "\"",
+                problem.getInstance() == null ? null : "instance=\"" + problem.getInstance() + "\"",
+                problem.getType() == null ? null : "type=" + problem.getType());
 
         Stream<String> parameters = problem.getParameters().entrySet().stream().map(this::serializeParameter);
 
@@ -55,16 +52,15 @@ public class ProblemLogger implements ProblemPostProcessor {
     }
 
     private String serializeParameter(Map.Entry<String, Object> param) {
-        String serializedValue = Optional.ofNullable(param.getValue())
-                .map(value -> {
-                    if (value instanceof String) {
-                        return "\"" + value + "\"";
-                    } else {
-                        return value.toString();
-                    }
-                })
-                .orElse("null");
-
+        Object value = param.getValue();
+        String serializedValue;
+        if (value == null) {
+            serializedValue = "null";
+        } else if (value instanceof String) {
+            serializedValue = "\"" + value + "\"";
+        } else {
+            serializedValue = value.toString();
+        }
         return param.getKey() + "=" + serializedValue;
     }
 

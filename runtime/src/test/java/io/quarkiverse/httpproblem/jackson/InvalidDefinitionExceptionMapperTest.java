@@ -18,11 +18,12 @@ import io.quarkiverse.httpproblem.HttpProblem;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
 import io.quarkiverse.httpproblem.postprocessing.ProblemLogger;
+import io.quarkiverse.httpproblem.postprocessing.ProblemLoggingConfig;
 
 class InvalidDefinitionExceptionMapperTest {
 
     PostProcessorsRegistry registry = new PostProcessorsRegistry(
-            List.of(new ProblemLogger(), new ProblemDefaultsProvider()));
+            List.of(new ProblemLogger(ProblemLoggingConfig.defaults()), new ProblemDefaultsProvider()));
     InvalidDefinitionExceptionMapper mapper = new InvalidDefinitionExceptionMapper(registry, new DetailSanitizer(true));
 
     @Test

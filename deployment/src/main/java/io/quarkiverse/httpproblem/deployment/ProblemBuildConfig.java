@@ -1,7 +1,9 @@
 package io.quarkiverse.httpproblem.deployment;
 
+import java.util.List;
 import java.util.Map;
 
+import io.quarkiverse.httpproblem.postprocessing.ProblemLogLevel;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
@@ -54,5 +56,43 @@ public interface ProblemBuildConfig {
          */
         @WithDefault("true")
         boolean enabled();
+    }
+
+    /**
+     * Logging configuration for HTTP problem responses.
+     */
+    @WithName("logging")
+    LoggingConfig logging();
+
+    interface LoggingConfig {
+        /**
+         * Whether problem logging is enabled.
+         */
+        @WithDefault("true")
+        boolean enabled();
+
+        /**
+         * Log level per HTTP status code class ({@code 4xx}, {@code 5xx}) or exact status code ({@code 401}).
+         * <p>
+         * Exact codes take precedence over status classes. Unconfigured classes default to {@code INFO}.
+         * <p>
+         * Example:
+         *
+         * <pre>
+         * quarkus.http-problem.logging.level.4xx=DEBUG
+         * quarkus.http-problem.logging.level.5xx=ERROR
+         * quarkus.http-problem.logging.level.401=WARN
+         * </pre>
+         */
+        @WithName("level")
+        Map<String, ProblemLogLevel> level();
+
+        /**
+         * Comma-separated list of status code classes ({@code 5xx}) or exact codes ({@code 403})
+         * for which the original exception stack trace is included in the log output.
+         */
+        @WithDefault("5xx")
+        @WithName("include-stack-trace")
+        List<String> includeStackTrace();
     }
 }
