@@ -256,6 +256,31 @@ public class ProblemProcessor {
 
     @Record(STATIC_INIT)
     @BuildStep
+    void configureStatusCodeRange(ProblemRecorder recorder, ProblemRuntimeFixedConfig config) {
+        int min = config.statusCode().min();
+        int max = config.statusCode().max();
+        validateStatusCodeRange(min, max);
+        recorder.configureStatusCodeRange(min, max);
+    }
+
+    static void validateStatusCodeRange(int min, int max) {
+        if (min > max) {
+            throw new ConfigurationException(
+                    "quarkus.http-problem.status-code.min (" + min
+                            + ") must be <= quarkus.http-problem.status-code.max (" + max + ")");
+        }
+        if (min < 100) {
+            throw new ConfigurationException(
+                    "quarkus.http-problem.status-code.min (" + min + ") must be >= 100");
+        }
+        if (max > 999) {
+            throw new ConfigurationException(
+                    "quarkus.http-problem.status-code.max (" + max + ") must be <= 999");
+        }
+    }
+
+    @Record(STATIC_INIT)
+    @BuildStep
     SyntheticBeanBuildItem setupLogging(ProblemRecorder recorder, ProblemBuildConfig config) {
         ProblemBuildConfig.LoggingConfig logging = config.logging();
         if (!logging.enabled()) {

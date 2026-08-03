@@ -154,4 +154,15 @@ class Rfc9457StandardMembersTest {
                 .then()
                 .body("instance", equalTo("/throw/rfc9457/without-instance"));
     }
+
+    @ParameterizedTest(name = "RFC 9110 - out-of-range status code {0} should be rejected")
+    @ValueSource(ints = { 0, 99, 600, 1000 })
+    void outOfRangeStatusCodeShouldBeRejected(int status) {
+        given()
+                .queryParam("status", status)
+                .get("/throw/rfc9457/with-status")
+                .then()
+                .statusCode(INTERNAL_SERVER_ERROR.getStatusCode())
+                .body("status", equalTo(INTERNAL_SERVER_ERROR.getStatusCode()));
+    }
 }

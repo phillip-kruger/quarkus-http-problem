@@ -83,4 +83,36 @@ class ProblemProcessorTest {
                 .isTrue();
     }
 
+    @Test
+    void validateStatusCodeRangeShouldPassForDefaults() {
+        ProblemProcessor.validateStatusCodeRange(100, 599);
+    }
+
+    @Test
+    void validateStatusCodeRangeShouldPassForExtendedRange() {
+        ProblemProcessor.validateStatusCodeRange(100, 999);
+    }
+
+    @Test
+    void validateStatusCodeRangeShouldFailWhenMinGreaterThanMax() {
+        assertThatThrownBy(() -> ProblemProcessor.validateStatusCodeRange(600, 500))
+                .isInstanceOf(ConfigurationException.class)
+                .hasMessageContaining("min")
+                .hasMessageContaining("max");
+    }
+
+    @Test
+    void validateStatusCodeRangeShouldFailWhenMinBelow100() {
+        assertThatThrownBy(() -> ProblemProcessor.validateStatusCodeRange(50, 599))
+                .isInstanceOf(ConfigurationException.class)
+                .hasMessageContaining("100");
+    }
+
+    @Test
+    void validateStatusCodeRangeShouldFailWhenMaxAbove999() {
+        assertThatThrownBy(() -> ProblemProcessor.validateStatusCodeRange(100, 1000))
+                .isInstanceOf(ConfigurationException.class)
+                .hasMessageContaining("999");
+    }
+
 }

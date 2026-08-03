@@ -6,11 +6,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.ws.rs.core.Response;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class HttpProblemTest {
+
+    @AfterEach
+    void resetStatusCodeRange() {
+        HttpProblem.configureStatusCodeRange(100, 599);
+    }
 
     @Test
     void builderShouldPassAllFields() {
@@ -63,6 +69,35 @@ class HttpProblemTest {
         assertThatThrownBy(() -> HttpProblem.builder().withStatus(statusCode))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(String.valueOf(statusCode));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 600, 783, 999 })
+    void withStatusShouldAcceptExtendedRangeWhenConfigured(int statusCode) {
+        HttpProblem.configureStatusCodeRange(100, 999);
+        HttpProblem problem = HttpProblem.builder().withStatus(statusCode).build();
+        assertThat(problem.getStatusCode()).isEqualTo(statusCode);
+    }
+
+    @Test
+    void withStatusShouldRejectCodesOutsideConfiguredRange() {
+        HttpProblem.configureStatusCodeRange(200, 499);
+
+        assertThatThrownBy(() -> HttpProblem.builder().withStatus(100))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("200")
+                .hasMessageContaining("499");
+
+        assertThatThrownBy(() -> HttpProblem.builder().withStatus(500))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("200")
+                .hasMessageContaining("499");
+    }
+
+    @Test
+    void defaultStatusCodeRangeShouldBeSpecCompliant() {
+        assertThat(HttpProblem.statusCodeMin).isEqualTo(100);
+        assertThat(HttpProblem.statusCodeMax).isEqualTo(599);
     }
 
 }

@@ -26,6 +26,14 @@ public class HttpProblem extends RuntimeException {
 
     public static final MediaType MEDIA_TYPE = new MediaType("application", "problem+json");
 
+    static int statusCodeMin = 100;
+    static int statusCodeMax = 599;
+
+    public static void configureStatusCodeRange(int min, int max) {
+        statusCodeMin = min;
+        statusCodeMax = max;
+    }
+
     @Schema(description = "A optional URI reference that identifies the problem type", examples = "https://example.com/errors/not-found")
     private final URI type;
 
@@ -185,8 +193,10 @@ public class HttpProblem extends RuntimeException {
         }
 
         public Builder withStatus(int statusCode) {
-            if (statusCode < 100 || statusCode > 599) {
-                throw new IllegalArgumentException("HTTP status code must be between 100 and 599, got: " + statusCode);
+            if (statusCode < statusCodeMin || statusCode > statusCodeMax) {
+                throw new IllegalArgumentException(
+                        "HTTP status code must be between " + statusCodeMin + " and " + statusCodeMax
+                                + ", got: " + statusCode);
             }
             this.statusCode = statusCode;
             return this;

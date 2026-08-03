@@ -27,10 +27,34 @@ public interface ProblemRuntimeFixedConfig {
     boolean includeDetails();
 
     /**
+     * Status code validation range configuration.
+     */
+    @WithName("status-code")
+    StatusCodeConfig statusCode();
+
+    /**
      * Constraint violation configuration.
      */
     @WithName("constraint-violation")
     ConstraintViolationConfig constraintViolation();
+
+    interface StatusCodeConfig {
+
+        /**
+         * Minimum allowed HTTP status code (inclusive).
+         * RFC 9110 defines 100 as the lowest valid status code.
+         */
+        @WithDefault("100")
+        int min();
+
+        /**
+         * Maximum allowed HTTP status code (inclusive).
+         * RFC 9110 defines 599 as the highest valid status code.
+         * Set to 999 to allow non-standard codes used by some APIs.
+         */
+        @WithDefault("599")
+        int max();
+    }
 
     interface ConstraintViolationConfig {
 
