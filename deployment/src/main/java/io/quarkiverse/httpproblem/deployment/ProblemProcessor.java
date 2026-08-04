@@ -256,22 +256,23 @@ public class ProblemProcessor {
 
     @Record(STATIC_INIT)
     @BuildStep
-    SyntheticBeanBuildItem setupLogging(ProblemRecorder recorder, ProblemBuildConfig config) {
+    void setupLogging(ProblemRecorder recorder, ProblemBuildConfig config,
+            BuildProducer<SyntheticBeanBuildItem> syntheticBeans) {
         ProblemBuildConfig.LoggingConfig logging = config.logging();
         if (!logging.enabled()) {
-            return null;
+            return;
         }
 
         Map<String, ProblemLogLevel> levels = new LinkedHashMap<>(ProblemLoggingConfig.DEFAULT_LEVELS);
         levels.putAll(logging.level());
 
         RuntimeValue<ProblemLogger> runtimeValue = recorder.createProblemLogger(levels, logging.includeStackTrace());
-        return SyntheticBeanBuildItem.configure(ProblemLogger.class)
+        syntheticBeans.produce(SyntheticBeanBuildItem.configure(ProblemLogger.class)
                 .scope(Singleton.class)
                 .addType(ProblemPostProcessor.class)
                 .runtimeValue(runtimeValue)
                 .unremovable()
-                .done();
+                .done());
     }
 
     @BuildStep
