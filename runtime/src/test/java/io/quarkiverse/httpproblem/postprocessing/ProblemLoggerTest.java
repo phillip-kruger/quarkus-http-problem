@@ -253,6 +253,19 @@ class ProblemLoggerTest {
     }
 
     @Test
+    void shouldSanitizeParameterKeys() {
+        HttpProblem problem = HttpProblem.builder()
+                .withTitle("error")
+                .withStatus(BAD_REQUEST)
+                .with("bad\nkey", "value")
+                .build();
+
+        processor.apply(problem, simpleContext());
+
+        verify(logger).info("status=400, title=\"error\", bad_key=\"value\"");
+    }
+
+    @Test
     void sanitizeShouldReturnNullForNull() {
         assertThat(ProblemLogger.sanitize(null)).isNull();
     }
