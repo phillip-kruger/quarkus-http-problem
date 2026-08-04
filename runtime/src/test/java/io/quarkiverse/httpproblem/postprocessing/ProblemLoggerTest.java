@@ -5,6 +5,7 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static jakarta.ws.rs.core.Response.Status.UNAUTHORIZED;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -198,6 +199,72 @@ class ProblemLoggerTest {
         verify(logger, never()).error(anyString());
         verify(logger, never()).debug(anyString());
         verify(logger, never()).trace(anyString());
+    }
+
+    @Test
+    void shouldSanitizeNewlinesInTitle() {
+        HttpProblem problem = HttpProblem.builder()
+                .withTitle("legit\nINFO [fake] forged log line")
+                .withStatus(BAD_REQUEST)
+                .build();
+
+        processor.apply(problem, simpleContext());
+
+        verify(logger).info("status=400, title=\"legit_INFO [fake] forged log line\"");
+    }
+
+    @Test
+    void shouldSanitizeNewlinesInDetail() {
+        HttpProblem problem = HttpProblem.builder()
+                .withTitle("error")
+                .withDetail("line1\r\nline2")
+                .withStatus(BAD_REQUEST)
+                .build();
+
+        processor.apply(problem, simpleContext());
+
+        verify(logger).info("status=400, title=\"error\", detail=\"line1__line2\"");
+    }
+
+    @Test
+    void shouldSanitizeAnsiEscapesInDetail() {
+        HttpProblem problem = HttpProblem.builder()
+                .withTitle("error")
+                .withDetail("normal [31mred text[0m end")
+                .withStatus(BAD_REQUEST)
+                .build();
+
+        processor.apply(problem, simpleContext());
+
+        verify(logger).info("status=400, title=\"error\", detail=\"normal _red text_ end\"");
+    }
+
+    @Test
+    void shouldSanitizeCustomParameterValues() {
+        HttpProblem problem = HttpProblem.builder()
+                .withTitle("error")
+                .withStatus(BAD_REQUEST)
+                .with("injected", "value\nERROR [fake] forged")
+                .build();
+
+        processor.apply(problem, simpleContext());
+
+        verify(logger).info("status=400, title=\"error\", injected=\"value_ERROR [fake] forged\"");
+    }
+
+    @Test
+    void sanitizeShouldReturnNullForNull() {
+        assertThat(ProblemLogger.sanitize(null)).isNull();
+    }
+
+    @Test
+    void sanitizeShouldPassThroughCleanStrings() {
+        assertThat(ProblemLogger.sanitize("clean string 123")).isEqualTo("clean string 123");
+    }
+
+    @Test
+    void sanitizeShouldReplaceTabsAndOtherControlChars() {
+        assertThat(ProblemLogger.sanitize("a\tb c")).isEqualTo("a_b_c");
     }
 
 }
