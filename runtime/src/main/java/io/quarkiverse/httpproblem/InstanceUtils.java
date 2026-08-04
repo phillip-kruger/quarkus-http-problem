@@ -16,7 +16,7 @@ public final class InstanceUtils {
         try {
             return new URI(null, null, path, null);
         } catch (URISyntaxException e) {
-            LOG.warnf("Could not convert path to URI instance: %s", path);
+            LOG.warnf(e, "Could not convert path to URI instance: %s", path);
             return null;
         }
     }
