@@ -4,6 +4,8 @@ import static jakarta.ws.rs.core.Response.Status.UNAUTHORIZED;
 
 import jakarta.ws.rs.core.Response;
 
+import org.jboss.logging.Logger;
+
 import io.quarkiverse.httpproblem.HttpProblem;
 import io.quarkus.vertx.http.runtime.security.ChallengeData;
 import io.quarkus.vertx.http.runtime.security.HttpAuthenticator;
@@ -11,6 +13,8 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.ext.web.RoutingContext;
 
 final class HttpUnauthorizedUtils {
+
+    private static final Logger LOG = Logger.getLogger(HttpUnauthorizedUtils.class);
 
     static Uni<HttpProblem> toProblem(RoutingContext routingContext, Exception exception) {
         return extractChallenge(routingContext)
@@ -53,6 +57,8 @@ final class HttpUnauthorizedUtils {
             return Uni.createFrom().nullItem();
         }
         return authenticator.getChallenge(routingContext)
+                .onFailure()
+                .invoke(failure -> LOG.warnf(failure, "Failed to retrieve authentication challenge"))
                 .onFailure()
                 .recoverWithUni(Uni.createFrom().nullItem());
     }

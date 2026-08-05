@@ -56,6 +56,22 @@ class HttpUnauthorizedUtilsTest {
         assertThat(problem.getDetail()).isNull();
     }
 
+    @Test
+    void shouldFallBackToDefaultUnauthorizedWhenAuthenticatorFails() {
+        RoutingContext routingContext = mock(RoutingContext.class);
+        HttpAuthenticator authenticator = mock(HttpAuthenticator.class);
+        when(routingContext.get(HttpAuthenticator.class.getName())).thenReturn(authenticator);
+        when(authenticator.getChallenge(any(RoutingContext.class)))
+                .thenReturn(Uni.createFrom().failure(new RuntimeException("OIDC timeout")));
+
+        HttpProblem problem = HttpUnauthorizedUtils.toProblem(routingContext, new RuntimeException("auth failed"))
+                .await().atMost(Duration.ofSeconds(5));
+
+        assertThat(problem.getStatusCode()).isEqualTo(401);
+        assertThat(problem.getTitle()).isEqualTo("Unauthorized");
+        assertThat(problem.getDetail()).isEqualTo("auth failed");
+    }
+
     private static RoutingContext routingContextReturningChallenge(int challengeStatusCode) {
         return routingContextReturningChallenge(new ChallengeData(challengeStatusCode));
     }
