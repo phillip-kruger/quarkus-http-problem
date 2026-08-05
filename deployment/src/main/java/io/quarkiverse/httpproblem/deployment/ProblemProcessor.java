@@ -16,6 +16,8 @@ import org.eclipse.microprofile.openapi.OASFilter;
 
 import io.quarkiverse.httpproblem.DetailSanitizer;
 import io.quarkiverse.httpproblem.ProblemRuntimeFixedConfig;
+import io.quarkiverse.httpproblem.deployment.devui.ExceptionMapperInfo;
+import io.quarkiverse.httpproblem.devui.ProblemJsonRpcService;
 import io.quarkiverse.httpproblem.postprocessing.MdcPropertiesInjector;
 import io.quarkiverse.httpproblem.postprocessing.PostProcessorsRegistry;
 import io.quarkiverse.httpproblem.postprocessing.ProblemDefaultsProvider;
@@ -29,12 +31,16 @@ import io.quarkus.arc.deployment.SyntheticBeanBuildItem;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.Capability;
+import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
+import io.quarkus.devui.spi.page.CardPageBuildItem;
+import io.quarkus.devui.spi.page.Page;
 import io.quarkus.jsonb.spi.JsonbDeserializerBuildItem;
 import io.quarkus.jsonb.spi.JsonbSerializerBuildItem;
 import io.quarkus.resteasy.common.spi.ResteasyJaxrsProviderBuildItem;
@@ -277,5 +283,49 @@ public class ProblemProcessor {
     @BuildStep
     UnremovableBeanBuildItem markPostProcessorsUnremovable() {
         return UnremovableBeanBuildItem.beanTypes(ProblemPostProcessor.class);
+    }
+
+    @BuildStep(onlyIf = IsDevelopment.class)
+    CardPageBuildItem createDevUIPages(ProblemBuildConfig config, Capabilities capabilities) {
+        CardPageBuildItem card = new CardPageBuildItem();
+
+        List<ExceptionMapperInfo> mapperInfos = neededExceptionMappers(config, capabilities).stream()
+                .map(m -> new ExceptionMapperInfo(
+                        shortName(m.exceptionClassName),
+                        shortName(m.mapperClassName),
+                        "Active"))
+                .collect(Collectors.toList());
+
+        card.addBuildTimeData("mappers", mapperInfos,
+                "List of active HTTP Problem exception mappers with their exception type and status");
+
+        card.addPage(Page.tableDataPageBuilder("Exception Mappers")
+                .icon("font-awesome-solid:map")
+                .showColumn("exception")
+                .showColumn("mapper")
+                .showColumn("status")
+                .buildTimeDataKey("mappers"));
+
+        card.addPage(Page.webComponentPageBuilder()
+                .title("Post Processors")
+                .icon("font-awesome-solid:layer-group")
+                .componentLink("qwc-http-problem-processors.js"));
+
+        card.addPage(Page.webComponentPageBuilder()
+                .title("Test")
+                .icon("font-awesome-solid:flask")
+                .componentLink("qwc-http-problem-test.js"));
+
+        return card;
+    }
+
+    @BuildStep
+    JsonRPCProvidersBuildItem registerJsonRpcService() {
+        return new JsonRPCProvidersBuildItem(ProblemJsonRpcService.class);
+    }
+
+    private static String shortName(String fqcn) {
+        int lastDot = fqcn.lastIndexOf('.');
+        return lastDot >= 0 ? fqcn.substring(lastDot + 1) : fqcn;
     }
 }

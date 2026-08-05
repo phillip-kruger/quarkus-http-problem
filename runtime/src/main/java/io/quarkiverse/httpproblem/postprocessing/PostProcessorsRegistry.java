@@ -34,6 +34,10 @@ public class PostProcessorsRegistry {
                 .toList();
     }
 
+    public List<ProblemPostProcessor> getProcessors() {
+        return processors;
+    }
+
     public HttpProblem applyPostProcessing(HttpProblem problem, ProblemContext context) {
         HttpProblem finalProblem = problem;
         for (ProblemPostProcessor processor : processors) {
