@@ -2,6 +2,7 @@ package io.quarkiverse.httpproblem.postprocessing;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -10,6 +11,8 @@ import org.jboss.logging.Logger;
 import io.quarkiverse.httpproblem.HttpProblem;
 
 public class ProblemLogger implements ProblemPostProcessor {
+
+    private static final Pattern CONTROL_CHARS = Pattern.compile("\\e\\[[0-9;]*[a-zA-Z]|[\\x00-\\x1f\\x7f]");
 
     private final Logger logger;
     private final ProblemLoggingConfig config;
@@ -39,8 +42,8 @@ public class ProblemLogger implements ProblemPostProcessor {
     private String serialize(HttpProblem problem) {
         Stream<String> basicFields = Stream.of(
                 "status=" + problem.getStatusCode(),
-                problem.getTitle() == null ? null : "title=\"" + problem.getTitle() + "\"",
-                problem.getDetail() == null ? null : "detail=\"" + problem.getDetail() + "\"",
+                problem.getTitle() == null ? null : "title=\"" + sanitize(problem.getTitle()) + "\"",
+                problem.getDetail() == null ? null : "detail=\"" + sanitize(problem.getDetail()) + "\"",
                 problem.getInstance() == null ? null : "instance=\"" + problem.getInstance() + "\"",
                 problem.getType() == null ? null : "type=" + problem.getType());
 
@@ -57,11 +60,18 @@ public class ProblemLogger implements ProblemPostProcessor {
         if (value == null) {
             serializedValue = "null";
         } else if (value instanceof String) {
-            serializedValue = "\"" + value + "\"";
+            serializedValue = "\"" + sanitize((String) value) + "\"";
         } else {
-            serializedValue = value.toString();
+            serializedValue = sanitize(value.toString());
         }
-        return param.getKey() + "=" + serializedValue;
+        return sanitize(param.getKey()) + "=" + serializedValue;
+    }
+
+    static String sanitize(String value) {
+        if (value == null) {
+            return null;
+        }
+        return CONTROL_CHARS.matcher(value).replaceAll("_");
     }
 
     @Override
