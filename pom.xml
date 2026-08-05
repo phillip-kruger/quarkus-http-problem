@@ -43,6 +43,7 @@
 
     <modules>
         <module>runtime</module>
+        <module>runtime-dev</module>
         <module>deployment</module>
         <module>integration-test</module>
     </modules>
@@ -61,6 +62,17 @@
                 <groupId>org.zalando</groupId>
                 <artifactId>problem</artifactId>
                 <version>${zalando-problem.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.quarkiverse.httpproblem</groupId>
+                <artifactId>quarkus-http-problem</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.quarkiverse.httpproblem</groupId>
+                <artifactId>quarkus-http-problem-dev</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
