@@ -185,9 +185,6 @@ public class HttpProblem extends RuntimeException {
         }
 
         public Builder withStatus(int statusCode) {
-            if (statusCode < 100 || statusCode > 599) {
-                throw new IllegalArgumentException("HTTP status code must be between 100 and 599, got: " + statusCode);
-            }
             this.statusCode = statusCode;
             return this;
         }
